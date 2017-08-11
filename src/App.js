@@ -1,29 +1,50 @@
 import React, {Component} from "react";
-import axios from 'axios';
+import axios from "axios";
 import {Appbar, Container} from "muicss/react";
-import Tasks from './Components/Tasks';
+import Tasks from "./Components/Tasks";
 import "./App.css";
 
 class App extends Component {
-  constructor(){
+  constructor() {
     super();
     this.state = {
       tasks: []
     }
   }
 
-  componentWillMount(){
+  componentWillMount() {
     this.getTasks();
   }
 
-  getTasks(){
+  getTasks() {
     axios.request({
-      method:'get',
-      url:'https://api.mlab.com/api/1/databases/reacttasks/collections/tasks?apiKey=mb7H00lW6jqlpY2bgWAmNKfIE7YvH29m'
+      method: 'get',
+      url: 'https://api.mlab.com/api/1/databases/reacttasks/collections/tasks?apiKey=mb7H00lW6jqlpY2bgWAmNKfIE7YvH29m'
     }).then((response) => {
       this.setState({tasks: response.data}, () => {
         console.log(this.state);
       });
+    }).catch((error) => {
+      console.log(error);
+    });
+  }
+
+  editState(task, checked) {
+    axios.request({
+      method: 'put',
+      url: 'https://api.mlab.com/api/1/databases/reacttasks/collections/tasks/' + task._id.$oid + '?apiKey=mb7H00lW6jqlpY2bgWAmNKfIE7YvH29m',
+      data: {
+        text: task.text,
+        completed: checked
+      }
+    }).then((response) => {
+      let tasks = this.state.tasks;
+      for (let i = 0; i < tasks.length; i++) {
+        if (tasks[i]._id.$oid === response.data._id.$oid) {
+          tasks[i].completed = checked;
+        }
+      }
+      this.setState({tasks: tasks});
     }).catch((error) => {
       console.log(error);
     });
@@ -45,7 +66,7 @@ class App extends Component {
         </Appbar>
         <br />
         <Container>
-          <Tasks tasks={this.state.tasks}/>
+          <Tasks onEditState={this.editState.bind(this)} tasks={this.state.tasks}/>
         </Container>
       </div>
     );
